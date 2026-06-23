@@ -10,7 +10,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
-<script src="topbar.js" defer></script>
+<script src="sidebar.js" defer></script>
 
 <style>
 /* ===== Shared design tokens (same as the rest of the dashboard) ===== */
@@ -403,7 +403,7 @@ body::after {
   function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
   function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 
-  // Mirror of topbar.js defaultWaterState so we never clobber the water tracker.
+  // Mirror of sidebar.js defaultWaterState so we never clobber the water tracker.
   function defaultWater() {
     return { unit:'bottle', bottleMl:500, glassMl:250, weightUnit:'kg',
       profile:{ weightKg:75, age:25, sex:'m', activityHrsPerWeek:5 },
