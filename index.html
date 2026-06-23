@@ -116,8 +116,8 @@ body::after{content:'';position:fixed;inset:0;background-image:radial-gradient(r
           <div class="ts-sub">Sleep</div>
         </div>
         <div>
-          <div class="ts-val" id="wh-rhr" style="font-size:20px">—</div>
-          <div class="ts-sub">Resting HR</div>
+          <div class="ts-val" id="wh-strain" style="font-size:20px">—</div>
+          <div class="ts-sub">Strain</div>
         </div>
       </div>
     </div>
@@ -254,26 +254,29 @@ body::after{content:'';position:fixed;inset:0;background-image:radial-gradient(r
   (async function() {
     const WHOOP_KEY = 'whoop_tokens_v1';
     const CACHE_KEY = 'whoop_stats_cache_v1';
-    function setWhoop(rec, sleep, rhr) {
+    function setWhoop(rec, sleep, strain) {
       const recEl = document.getElementById('wh-rec');
       const slpEl = document.getElementById('wh-sleep');
-      const rhrEl = document.getElementById('wh-rhr');
+      const strEl = document.getElementById('wh-strain');
       if (!recEl) return;
       function colorFor(val, type) {
         if (val == null) return 'var(--text-tertiary)';
         if (type === 'rec' || type === 'sleep') {
           return val >= 67 ? '#6BE3A4' : val >= 34 ? '#fbbf24' : '#f87171';
         }
+        if (type === 'strain') {
+          return val >= 14 ? '#f87171' : val >= 10 ? '#fbbf24' : '#6BE3A4';
+        }
         return 'var(--text-primary)';
       }
       if (recEl) { recEl.textContent = rec != null ? rec + '%' : '—'; recEl.style.color = colorFor(rec,'rec'); }
       if (slpEl) { slpEl.textContent = sleep != null ? sleep + '%' : '—'; slpEl.style.color = colorFor(sleep,'sleep'); }
-      if (rhrEl) { rhrEl.textContent = rhr != null ? rhr : '—'; }
+      if (strEl) { strEl.textContent = strain != null ? strain : '—'; strEl.style.color = colorFor(strain,'strain'); }
     }
     // Show cached immediately
     try {
       const cache = JSON.parse(localStorage.getItem(CACHE_KEY));
-      if (cache) setWhoop(cache.rec, cache.sleep, cache.rhr);
+      if (cache) setWhoop(cache.rec, cache.sleep, cache.strain);
     } catch(e) {}
     // Fetch fresh
     try {
@@ -288,18 +291,20 @@ body::after{content:'';position:fixed;inset:0;background-image:radial-gradient(r
         if (!r.ok) throw new Error('whoop ' + r.status);
         return r.json();
       }
-      const [rec, sleep] = await Promise.all([
+      const [rec, sleep, cycle] = await Promise.all([
         wFetch('/recovery?limit=1', t).catch(() => null),
         wFetch('/activity/sleep?limit=1', t).catch(() => null),
+        wFetch('/cycle?limit=1', t).catch(() => null),
       ]);
       const r0 = rec && rec.records && rec.records[0];
       const s0 = sleep && sleep.records && sleep.records[0];
+      const c0 = cycle && cycle.records && cycle.records[0];
       const stats = {
-        rec:   r0 && r0.score ? Math.round(r0.score.recovery_score) : null,
-        rhr:   r0 && r0.score ? Math.round(r0.score.resting_heart_rate) : null,
-        sleep: s0 && s0.score ? Math.round(s0.score.sleep_performance_percentage) : null,
+        rec:    r0 && r0.score ? Math.round(r0.score.recovery_score) : null,
+        sleep:  s0 && s0.score ? Math.round(s0.score.sleep_performance_percentage) : null,
+        strain: c0 && c0.score ? (c0.score.strain != null ? Math.round(c0.score.strain * 10) / 10 : null) : null,
       };
-      setWhoop(stats.rec, stats.sleep, stats.rhr);
+      setWhoop(stats.rec, stats.sleep, stats.strain);
       localStorage.setItem(CACHE_KEY, JSON.stringify(stats));
     } catch(e) {}
   })();
