@@ -26,6 +26,7 @@
     if (p.endsWith('po-water.html'))            return 'health';
     if (p.endsWith('daily-planner.html'))       return 'planner';
     if (p.endsWith('ai-use-cases.html'))        return 'usecases';
+    if (p.endsWith('subscriptions.html'))      return 'subscriptions';
     if (p.endsWith('productivity-mentor.html')) return 'productivity';
     if (p.endsWith('personality-mentor.html'))  return 'personality';
     if (p.endsWith('alok.html'))                return 'alok';
@@ -42,6 +43,7 @@
     { id: 'finance',  icon: '💰', label: 'Finance',          href: 'finance.html' },
     { id: 'planner',  icon: '📅', label: 'Daily Planner',    href: 'daily-planner.html' },
     { id: 'usecases', icon: '🤖', label: 'AI Use Cases',     href: 'ai-use-cases.html' },
+    { id: 'subscriptions', icon: '💳', label: 'Subscriptions',     href: 'subscriptions.html' },
   ];
 
   const WORKSTATIONS = [

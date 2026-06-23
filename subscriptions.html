@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Subscriptions</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="sidebar.js" defer></script>
+<style>
+:root {
+  --text-primary:#FAFAFA;--text-secondary:#B8B6B0;--text-tertiary:#76746E;
+  --accent:#6BE3A4;--blue:#7DD3FC;--warn:#fbbf24;--danger:#f87171;--purple:#A78BFA;
+  --font:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;
+  --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --card-bg:rgba(255,255,255,0.035);--card-border:rgba(255,255,255,0.07);--radius:14px;
+}
+*{box-sizing:border-box;} html,body{margin:0;padding:0;background:#050506;color:var(--text-secondary);font-family:var(--font);-webkit-font-smoothing:antialiased;}
+body{min-height:100vh;padding:max(22px,env(safe-area-inset-top)) 20px 40px;overflow-x:hidden;}
+.page{max-width:860px;margin:0 auto;}
+.page-title{font-size:24px;font-weight:700;letter-spacing:-0.02em;background:linear-gradient(180deg,#fff 0%,#C7C4BC 120%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 4px;}
+.page-sub{font-size:13px;color:var(--text-tertiary);margin-bottom:20px;}
+
+/* Summary bar */
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+@media(max-width:560px){.summary{grid-template-columns:1fr 1fr;}}
+.sum-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:14px 16px;}
+.sum-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-tertiary);margin-bottom:6px;}
+.sum-val{font-size:22px;font-weight:700;color:var(--text-primary);font-family:var(--font-mono);}
+.sum-sub{font-size:11px;color:var(--text-tertiary);margin-top:2px;}
+
+/* Category filter */
+.filters{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px;}
+.f-btn{background:var(--card-bg);border:1px solid var(--card-border);border-radius:20px;padding:5px 14px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--text-secondary);cursor:pointer;transition:all .15s;}
+.f-btn:hover,.f-btn.active{background:rgba(107,227,164,0.1);border-color:rgba(107,227,164,0.35);color:var(--accent);}
+
+/* Table */
+.sub-table{width:100%;border-collapse:separate;border-spacing:0;}
+.sub-table thead th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-tertiary);padding:0 12px 10px;text-align:left;}
+.sub-table thead th:last-child{text-align:right;}
+.sub-row{background:var(--card-bg);border-bottom:1px solid rgba(255,255,255,0.04);transition:background .1s;}
+.sub-row:hover{background:rgba(255,255,255,0.05);}
+.sub-row td{padding:12px 12px;vertical-align:middle;}
+.sub-row:first-child td:first-child{border-radius:var(--radius) 0 0 0;}
+.sub-row:first-child td:last-child{border-radius:0 var(--radius) 0 0;}
+.sub-row:last-child td:first-child{border-radius:0 0 0 var(--radius);}
+.sub-row:last-child td:last-child{border-radius:0 0 var(--radius) 0;}
+
+.sub-name{font-size:14px;font-weight:600;color:var(--text-primary);}
+.sub-note{font-size:11px;color:var(--text-tertiary);margin-top:2px;}
+.cat-badge{font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;}
+.cat-AI{background:rgba(167,139,250,0.12);color:var(--purple);}
+.cat-Productivity{background:rgba(107,227,164,0.1);color:var(--accent);}
+.cat-Health{background:rgba(248,113,113,0.1);color:var(--danger);}
+.cat-Entertainment{background:rgba(251,191,36,0.1);color:var(--warn);}
+.cat-Cloud{background:rgba(125,211,252,0.1);color:var(--blue);}
+.cat-Finance{background:rgba(255,255,255,0.08);color:var(--text-secondary);}
+.cat-Other{background:rgba(255,255,255,0.06);color:var(--text-tertiary);}
+
+.sub-amount{font-size:14px;font-weight:700;color:var(--text-primary);font-family:var(--font-mono);text-align:right;white-space:nowrap;}
+.sub-freq{font-size:10px;color:var(--text-tertiary);text-align:right;margin-top:1px;}
+.sub-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;}
+.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.status-active .status-dot{background:var(--accent);}
+.status-active{color:var(--accent);}
+.status-paused .status-dot{background:var(--warn);}
+.status-paused{color:var(--warn);}
+.sub-actions{display:flex;gap:6px;justify-content:flex-end;}
+.act-btn{background:none;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--text-secondary);cursor:pointer;font-family:var(--font);transition:all .15s;}
+.act-btn:hover{color:var(--text-primary);border-color:rgba(255,255,255,0.2);}
+.act-btn.del:hover{color:var(--danger);border-color:rgba(248,113,113,0.3);}
+
+/* Add form */
+.add-section{margin-top:20px;}
+.add-toggle{display:inline-flex;align-items:center;gap:8px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:11px 18px;color:var(--text-secondary);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;width:100%;justify-content:center;}
+.add-toggle:hover{background:rgba(255,255,255,0.06);color:var(--text-primary);}
+.add-form{display:none;margin-top:12px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:18px;}
+.add-form.open{display:block;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+@media(max-width:560px){.form-grid{grid-template-columns:1fr;}}
+.form-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-tertiary);margin-bottom:5px;display:block;}
+.form-inp{width:100%;padding:9px 13px;border:1px solid rgba(255,255,255,0.1);border-radius:10px;background:rgba(0,0,0,0.3);color:var(--text-primary);font-family:var(--font);font-size:13px;outline:none;transition:border-color .2s;}
+.form-inp:focus{border-color:var(--accent);}
+.form-actions{display:flex;gap:8px;margin-top:4px;}
+.form-save{background:var(--accent);color:#050506;border:none;border-radius:10px;padding:9px 20px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;}
+.form-cancel{background:none;border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);border-radius:10px;padding:9px 20px;font-family:var(--font);font-size:13px;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1 class="page-title">💳 Subscriptions</h1>
+  <p class="page-sub">Monthly spending on recurring services</p>
+
+  <!-- Summary -->
+  <div class="summary">
+    <div class="sum-card">
+      <div class="sum-lbl">Monthly Total</div>
+      <div class="sum-val" id="sum-month">₹0</div>
+      <div class="sum-sub" id="sum-count">0 active</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-lbl">Annual Spend</div>
+      <div class="sum-val" id="sum-year">₹0</div>
+      <div class="sum-sub">projected</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-lbl">Top Category</div>
+      <div class="sum-val" id="sum-top" style="font-size:16px;padding-top:4px;">—</div>
+      <div class="sum-sub" id="sum-top-amt"></div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters" id="filters">
+    <button class="f-btn active" onclick="filterCat('All')">All</button>
+    <button class="f-btn" onclick="filterCat('AI')">AI</button>
+    <button class="f-btn" onclick="filterCat('Productivity')">Productivity</button>
+    <button class="f-btn" onclick="filterCat('Health')">Health</button>
+    <button class="f-btn" onclick="filterCat('Entertainment')">Entertainment</button>
+    <button class="f-btn" onclick="filterCat('Cloud')">Cloud</button>
+    <button class="f-btn" onclick="filterCat('Finance')">Finance</button>
+    <button class="f-btn" onclick="filterCat('Other')">Other</button>
+  </div>
+
+  <!-- Table -->
+  <table class="sub-table">
+    <thead>
+      <tr>
+        <th style="width:38%">Service</th>
+        <th>Category</th>
+        <th>Status</th>
+        <th style="text-align:right">Monthly</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="sub-body"></tbody>
+  </table>
+
+  <!-- Add -->
+  <div class="add-section">
+    <button class="add-toggle" onclick="toggleForm()">+ Add Subscription</button>
+    <div class="add-form" id="add-form">
+      <div class="form-grid">
+        <div>
+          <label class="form-lbl">Service name</label>
+          <input class="form-inp" id="f-name" placeholder="e.g. Claude Pro">
+        </div>
+        <div>
+          <label class="form-lbl">Monthly amount (₹)</label>
+          <input class="form-inp" id="f-amount" type="number" placeholder="1699">
+        </div>
+        <div>
+          <label class="form-lbl">Category</label>
+          <select class="form-inp" id="f-cat">
+            <option>AI</option><option>Productivity</option><option>Health</option>
+            <option>Entertainment</option><option>Cloud</option><option>Finance</option><option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-lbl">Billing</label>
+          <select class="form-inp" id="f-freq">
+            <option value="monthly">Monthly</option>
+            <option value="annual">Annual (÷12)</option>
+          </select>
+        </div>
+        <div style="grid-column:1/-1">
+          <label class="form-lbl">Notes (optional)</label>
+          <input class="form-inp" id="f-note" placeholder="e.g. Family plan, 5 users">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="form-save" onclick="addSub()">Save</button>
+        <button class="form-cancel" onclick="toggleForm()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const KEY = 'subscriptions:v1';
+  function load() { try { return JSON.parse(localStorage.getItem(KEY))||[]; } catch(e){ return []; } }
+  function save(d) { localStorage.setItem(KEY, JSON.stringify(d)); }
+
+  let subs = load();
+  // Seed with common ones if empty
+  if (!subs.length) {
+    subs = [
+      { id:1, name:'Claude Pro', cat:'AI', note:'Anthropic', amountMonthly:1699, freq:'monthly', active:true },
+      { id:2, name:'ChatGPT Plus', cat:'AI', note:'OpenAI', amountMonthly:1699, freq:'monthly', active:true },
+      { id:3, name:'Perplexity Pro', cat:'AI', note:'', amountMonthly:1699, freq:'monthly', active:true },
+      { id:4, name:'Notion', cat:'Productivity', note:'Personal plan', amountMonthly:800, freq:'monthly', active:true },
+      { id:5, name:'Google One', cat:'Cloud', note:'200GB storage', amountMonthly:130, freq:'monthly', active:true },
+      { id:6, name:'WHOOP', cat:'Health', note:'Band subscription', amountMonthly:999, freq:'monthly', active:true },
+    ];
+    save(subs);
+  }
+  let sid = Math.max(0,...subs.map(s=>s.id||0))+1;
+  let activeCat = 'All';
+
+  function fmt(n) {
+    if (n >= 100000) return '₹'+(n/100000).toFixed(1)+'L';
+    if (n >= 1000) return '₹'+(n/1000).toFixed(1)+'K';
+    return '₹'+Math.round(n).toLocaleString('en-IN');
+  }
+
+  function render() {
+    const active = subs.filter(s => s.active);
+    const monthly = active.reduce((a,s) => a + (s.amountMonthly||0), 0);
+
+    document.getElementById('sum-month').textContent = fmt(monthly);
+    document.getElementById('sum-count').textContent = active.length + ' active subscription' + (active.length!==1?'s':'');
+    document.getElementById('sum-year').textContent = fmt(monthly * 12);
+
+    // Top category
+    const catTotals = {};
+    active.forEach(s => { catTotals[s.cat] = (catTotals[s.cat]||0) + (s.amountMonthly||0); });
+    const topCat = Object.entries(catTotals).sort((a,b)=>b[1]-a[1])[0];
+    document.getElementById('sum-top').textContent = topCat ? topCat[0] : '—';
+    document.getElementById('sum-top-amt').textContent = topCat ? fmt(topCat[1])+'/mo' : '';
+
+    const filtered = activeCat === 'All' ? subs : subs.filter(s => s.cat === activeCat);
+    const tbody = document.getElementById('sub-body');
+    tbody.innerHTML = filtered.map(s => `
+      <tr class="sub-row" data-id="${s.id}">
+        <td><div class="sub-name">${s.name}</div>${s.note?`<div class="sub-note">${s.note}</div>`:''}</td>
+        <td><span class="cat-badge cat-${s.cat.replace(/\s/g,'')}">${s.cat}</span></td>
+        <td><span class="sub-status status-${s.active?'active':'paused'}"><span class="status-dot"></span>${s.active?'Active':'Paused'}</span></td>
+        <td>
+          <div class="sub-amount">${fmt(s.amountMonthly)}</div>
+          <div class="sub-freq">${s.freq==='annual'?'annual ÷12':'per month'}</div>
+        </td>
+        <td>
+          <div class="sub-actions">
+            <button class="act-btn" onclick="toggleStatus(${s.id})">${s.active?'Pause':'Resume'}</button>
+            <button class="act-btn del" onclick="deleteSub(${s.id})">✕</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  window.filterCat = function(cat) {
+    activeCat = cat;
+    document.querySelectorAll('.f-btn').forEach(b => b.classList.toggle('active', b.textContent===cat));
+    render();
+  };
+  window.toggleStatus = function(id) {
+    const s = subs.find(x=>x.id===id); if(s){ s.active=!s.active; save(subs); render(); }
+  };
+  window.deleteSub = function(id) {
+    if(!confirm('Remove this subscription?')) return;
+    subs = subs.filter(x=>x.id!==id); save(subs); render();
+  };
+  window.toggleForm = function() {
+    const f = document.getElementById('add-form'); f.classList.toggle('open');
+    if(f.classList.contains('open')) document.getElementById('f-name').focus();
+  };
+  window.addSub = function() {
+    const name = document.getElementById('f-name').value.trim();
+    const amt = parseFloat(document.getElementById('f-amount').value);
+    if(!name||!amt) return;
+    subs.push({ id:sid++, name, cat:document.getElementById('f-cat').value,
+      note:document.getElementById('f-note').value.trim(),
+      amountMonthly:amt, freq:document.getElementById('f-freq').value, active:true });
+    save(subs);
+    ['f-name','f-amount','f-note'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('add-form').classList.remove('open');
+    render();
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>
