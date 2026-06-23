@@ -36,8 +36,7 @@ body::after{content:'';position:fixed;inset:0;background-image:radial-gradient(r
 .ts-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-tertiary);margin-bottom:6px;}
 .ts-val{font-size:18px;font-weight:700;color:var(--text-primary);font-family:var(--font-mono);}
 .ts-sub{font-size:11px;color:var(--text-tertiary);margin-top:2px;}
-.water-bar{height:4px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:8px;}
-.water-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--blue),var(--accent));transition:width .4s;}
+
 
 /* Section label */
 .sec-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--text-tertiary);margin:20px 0 10px;}
@@ -105,10 +104,22 @@ body::after{content:'';position:fixed;inset:0;background-image:radial-gradient(r
       <div class="ts-val" id="today-date" style="font-size:13px;font-family:var(--font);color:var(--text-secondary);">—</div>
       <div class="ts-sub" id="today-tasks">Loading tasks…</div>
     </div>
-    <div class="ts-card">
-      <div class="ts-lbl">Water</div>
-      <div class="ts-val"><span id="w-done">0</span> / <span id="w-total">0</span> <span style="font-size:12px;color:var(--text-tertiary)">bottles</span></div>
-      <div class="water-bar"><div class="water-fill" id="w-bar" style="width:0%"></div></div>
+    <div class="ts-card" id="whoop-card">
+      <div class="ts-lbl">WHOOP · Today</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px">
+        <div>
+          <div class="ts-val" id="wh-rec" style="font-size:20px">—</div>
+          <div class="ts-sub">Recovery</div>
+        </div>
+        <div>
+          <div class="ts-val" id="wh-sleep" style="font-size:20px">—</div>
+          <div class="ts-sub">Sleep</div>
+        </div>
+        <div>
+          <div class="ts-val" id="wh-rhr" style="font-size:20px">—</div>
+          <div class="ts-sub">Resting HR</div>
+        </div>
+      </div>
     </div>
     <div class="ts-card">
       <div class="ts-lbl">Subscriptions</div>
@@ -239,17 +250,59 @@ body::after{content:'';position:fixed;inset:0;background-image:radial-gradient(r
       : 'All tasks done ✓';
   } catch(e) { document.getElementById('today-tasks').textContent = 'No tasks yet'; }
 
-  // Water
-  try {
-    const w = JSON.parse(localStorage.getItem('po_water_v1')) || {};
-    const logs = w.logs || {};
-    const key = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-    const done = logs[key] || 0;
-    const total = Math.max(1, Math.ceil(((w.profile?.weightKg||75)*35)/500));
-    document.getElementById('w-done').textContent = done;
-    document.getElementById('w-total').textContent = total;
-    document.getElementById('w-bar').style.width = Math.min(100, Math.round(done/total*100))+'%';
-  } catch(e){}
+  // WHOOP stats
+  (async function() {
+    const WHOOP_KEY = 'whoop_tokens_v1';
+    const CACHE_KEY = 'whoop_stats_cache_v1';
+    function setWhoop(rec, sleep, rhr) {
+      const recEl = document.getElementById('wh-rec');
+      const slpEl = document.getElementById('wh-sleep');
+      const rhrEl = document.getElementById('wh-rhr');
+      if (!recEl) return;
+      function colorFor(val, type) {
+        if (val == null) return 'var(--text-tertiary)';
+        if (type === 'rec' || type === 'sleep') {
+          return val >= 67 ? '#6BE3A4' : val >= 34 ? '#fbbf24' : '#f87171';
+        }
+        return 'var(--text-primary)';
+      }
+      if (recEl) { recEl.textContent = rec != null ? rec + '%' : '—'; recEl.style.color = colorFor(rec,'rec'); }
+      if (slpEl) { slpEl.textContent = sleep != null ? sleep + '%' : '—'; slpEl.style.color = colorFor(sleep,'sleep'); }
+      if (rhrEl) { rhrEl.textContent = rhr != null ? rhr : '—'; }
+    }
+    // Show cached immediately
+    try {
+      const cache = JSON.parse(localStorage.getItem(CACHE_KEY));
+      if (cache) setWhoop(cache.rec, cache.sleep, cache.rhr);
+    } catch(e) {}
+    // Fetch fresh
+    try {
+      let t = JSON.parse(localStorage.getItem(WHOOP_KEY));
+      if (!t || !t.access) { setWhoop(null, null, null); return; }
+      async function wFetch(path, tok) {
+        const [p, qs] = path.split('?');
+        const params = new URLSearchParams(qs||''); params.set('path', p);
+        const r = await fetch('/api/whoop-data?' + params.toString(), {
+          headers: { 'Authorization': 'Bearer ' + tok.access, 'Accept': 'application/json' }
+        });
+        if (!r.ok) throw new Error('whoop ' + r.status);
+        return r.json();
+      }
+      const [rec, sleep] = await Promise.all([
+        wFetch('/recovery?limit=1', t).catch(() => null),
+        wFetch('/activity/sleep?limit=1', t).catch(() => null),
+      ]);
+      const r0 = rec && rec.records && rec.records[0];
+      const s0 = sleep && sleep.records && sleep.records[0];
+      const stats = {
+        rec:   r0 && r0.score ? Math.round(r0.score.recovery_score) : null,
+        rhr:   r0 && r0.score ? Math.round(r0.score.resting_heart_rate) : null,
+        sleep: s0 && s0.score ? Math.round(s0.score.sleep_performance_percentage) : null,
+      };
+      setWhoop(stats.rec, stats.sleep, stats.rhr);
+      localStorage.setItem(CACHE_KEY, JSON.stringify(stats));
+    } catch(e) {}
+  })();
 
   // Subscriptions summary
   try {

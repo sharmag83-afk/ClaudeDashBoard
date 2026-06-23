@@ -1601,8 +1601,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <div id="netWorthBreakdown" style="font-size:11px;color:var(--text-tertiary);margin-top:4px"></div>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
-        <span style="font-size:11px;color:var(--text-tertiary)">CHF</span>
+        <span style="font-size:11px;color:var(--text-tertiary)" id="currencyLabel">₹</span>
         <select id="netWorthCurrency" style="background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:inherit;cursor:pointer">
+          <option value="INR" selected>INR (₹)</option>
           <option value="CHF">CHF</option>
           <option value="USD">USD</option>
           <option value="EUR">EUR</option>
@@ -1750,6 +1751,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <input type="text" placeholder="Service (e.g. Netflix)" id="subName" style="flex:1.5;min-width:120px" />
       <input type="number" placeholder="Amount" id="subAmount" step="0.01" style="flex:1;max-width:100px" />
       <select id="subCurrency" style="padding:6px 10px;border:0.5px solid var(--border);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary);max-width:90px">
+        <option value="INR" selected>INR (₹)</option>
         <option value="CHF">CHF</option>
         <option value="USD">USD</option>
         <option value="EUR">EUR</option>
@@ -1787,6 +1789,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <input type="text"   id="ordName"   placeholder="Item (e.g. New iPhone)" class="ord-input ord-input-name">
       <input type="number" id="ordCost"   placeholder="Cost" step="0.01" class="ord-input ord-input-cost">
       <select id="ordCurrency" class="ord-input ord-input-ccy">
+        <option value="INR" selected>INR (₹)</option>
         <option value="CHF">CHF</option>
         <option value="USD">USD</option>
         <option value="EUR">EUR</option>
@@ -1844,6 +1847,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <input type="text"   id="wishName"   placeholder="Item name (e.g. New iPhone Pro Max)" class="wish-input wish-input-name">
       <input type="number" id="wishAmount" placeholder="Cost" step="0.01" class="wish-input wish-input-amt">
       <select id="wishCurrency" class="wish-input wish-input-ccy">
+        <option value="INR" selected>INR (₹)</option>
         <option value="CHF">CHF</option>
         <option value="USD">USD</option>
         <option value="EUR">EUR</option>
@@ -1940,7 +1944,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   // ============================================================
   // NET WORTH (copied from the main dashboard, verbatim logic)
   // ============================================================
-  const CURRENCY_KEY = 'nw_currency';
+  const CURRENCY_KEY = 'nw_currency'; const CURRENCY_DEFAULT = 'INR';
   const NW_CATS = [
     { key: 'bank',   listId: 'bankList',   totalId: 'bankTotal',   nameId: 'bankName',   amtId: 'bankAmount',   addId: 'bankAddBtn' },
     { key: 'stocks', listId: 'stocksList', totalId: 'stocksTotal', nameId: 'stocksName', amtId: 'stocksAmount', addId: 'stocksAddBtn' },
@@ -1951,7 +1955,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   const netWorthTotal = document.getElementById('netWorthTotal');
   const netWorthBreakdown = document.getElementById('netWorthBreakdown');
 
-  let exchangeRates = { CHF: 1, USD: 1, EUR: 1, GBP: 1 };
+  let exchangeRates = { CHF: 1, USD: 1, EUR: 1, GBP: 1, INR: 95 };
   async function loadExchangeRates() {
     try {
       const res = await fetch('https://open.er-api.com/v6/latest/CHF');
@@ -1961,7 +1965,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
           CHF: 1,
           USD: data.rates.USD || 1,
           EUR: data.rates.EUR || 1,
-          GBP: data.rates.GBP || 1
+          GBP: data.rates.GBP || 1,
+          INR: data.rates.INR || 95
         };
         renderAllNetWorth();
         if (typeof renderSubs === 'function') renderSubs();
@@ -1971,9 +1976,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   loadExchangeRates();
 
   function fmtMoney(amountCHF) {
-    const symbol = currencyEl ? currencyEl.value : 'CHF';
+    const symbol = currencyEl ? currencyEl.value : 'INR';
     const rate = exchangeRates[symbol] || 1;
     const num = (Number(amountCHF) || 0) * rate;
+    const prefix = symbol === 'INR' ? '₹' : symbol + ' ';
+    if (symbol === 'INR') {
+      return '₹' + Math.round(num).toLocaleString('en-IN');
+    }
     return symbol + ' ' + num.toLocaleString('en-US', { minimumFractionDigits: num % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 });
   }
 

@@ -39,11 +39,11 @@
 
   // ── Navigation structure ──
   const MODULES = [
-    { id: 'health',   icon: '💪', label: 'Health & Fitness', href: 'health.html' },
-    { id: 'finance',  icon: '💰', label: 'Finance',          href: 'finance.html' },
-    { id: 'planner',  icon: '📅', label: 'Daily Planner',    href: 'daily-planner.html' },
-    { id: 'usecases', icon: '🤖', label: 'AI Use Cases',     href: 'ai-use-cases.html' },
-    { id: 'subscriptions', icon: '💳', label: 'Subscriptions',     href: 'subscriptions.html' },
+    { id: 'health',        icon: '💪', label: 'Health & Fitness', href: 'health.html' },
+    { id: 'finance',       icon: '💰', label: 'Finance',          href: 'finance.html' },
+    { id: 'subscriptions', icon: '💳', label: 'Subscriptions',    href: 'subscriptions.html', sub: true },
+    { id: 'planner',       icon: '📅', label: 'Daily Planner',    href: 'daily-planner.html' },
+    { id: 'usecases',      icon: '🤖', label: 'AI Use Cases',     href: 'ai-use-cases.html' },
   ];
 
   const WORKSTATIONS = [
@@ -364,8 +364,9 @@ body.os-modal-open { overflow: hidden; touch-action: none; }
   function buildSidebarHtml() {
     const navItem = (item) => {
       const active = PAGE === item.id ? ' active' : '';
-      return `<a href="${item.href}" class="os-nav-item${active}">
-        <span class="os-nav-icon">${item.icon}</span>${item.label}</a>`;
+      const subStyle = item.sub ? ' style="padding-left:28px;font-size:12px;opacity:0.85"' : '';
+      return `<a href="${item.href}" class="os-nav-item${active}"${subStyle}>
+        <span class="os-nav-icon" style="${item.sub?'font-size:13px':''}">${item.icon}</span>${item.label}</a>`;
     };
     const alokActive = PAGE === 'alok' ? ' active' : '';
     return `
