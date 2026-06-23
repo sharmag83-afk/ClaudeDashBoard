@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Personality Development Mentor</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="sidebar.js" defer></script>
+<style>
+:root {
+  --text-primary:#FAFAFA;--text-secondary:#B8B6B0;--text-tertiary:#76746E;
+  --accent:#A78BFA;--green:#6BE3A4;
+  --font:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;
+  --card-bg:rgba(255,255,255,0.035);--card-border:rgba(255,255,255,0.07);--radius:14px;
+}
+*{box-sizing:border-box;} html,body{margin:0;padding:0;background:#050506;color:var(--text-secondary);font-family:var(--font);-webkit-font-smoothing:antialiased;}
+body{min-height:100vh;padding:max(22px,env(safe-area-inset-top)) 20px 40px;overflow-x:hidden;}
+.page{max-width:640px;margin:0 auto;}
+.hero{text-align:center;padding:40px 0 32px;}
+.hero-icon{font-size:56px;margin-bottom:16px;}
+.hero-title{font-size:28px;font-weight:700;letter-spacing:-0.025em;background:linear-gradient(180deg,#fff 0%,#C7C4BC 120%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;margin:0 0 10px;}
+.hero-desc{font-size:14px;color:var(--text-secondary);line-height:1.7;max-width:440px;margin:0 auto 24px;}
+.tags{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:32px;}
+.tag{font-size:11px;font-weight:600;padding:4px 12px;border-radius:12px;background:rgba(167,139,250,0.1);color:var(--accent);border:1px solid rgba(167,139,250,0.2);}
+.start-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,rgba(167,139,250,0.2),rgba(167,139,250,0.1));
+  border:1px solid rgba(167,139,250,0.35);
+  border-radius:14px;padding:14px 28px;
+  color:var(--text-primary);font-family:var(--font);font-size:15px;font-weight:700;
+  cursor:pointer;text-decoration:none;transition:all .15s;
+}
+.start-btn:hover{background:linear-gradient(135deg,rgba(167,139,250,0.32),rgba(167,139,250,0.2));border-color:rgba(167,139,250,0.55);}
+.section-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-tertiary);margin:0 0 12px;}
+.reflect-prompts{display:flex;flex-direction:column;gap:8px;margin-bottom:28px;}
+.prompt-card{
+  background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;
+  padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s;text-align:left;
+  font-family:var(--font);
+}
+.prompt-card:hover{border-color:rgba(167,139,250,0.3);background:rgba(167,139,250,0.04);}
+.pc-text{font-size:13px;color:var(--text-secondary);line-height:1.5;}
+.pc-cta{font-size:11px;color:var(--accent);margin-top:4px;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hero">
+    <div class="hero-icon">🌱</div>
+    <h1 class="hero-title">Personality Development</h1>
+    <p class="hero-desc">Your growth partner. Works on mindset, habits, emotional intelligence, and personal frameworks. Helps you reflect, identify patterns, and build the person you want to become.</p>
+    <div class="tags">
+      <span class="tag">Mindset</span>
+      <span class="tag">Habits</span>
+      <span class="tag">Emotional Intelligence</span>
+      <span class="tag">Reflection</span>
+      <span class="tag">Growth Frameworks</span>
+      <span class="tag">Pattern Recognition</span>
+    </div>
+    <a href="nova-lite.html?mode=personality" class="start-btn">▶ Start Growth Session</a>
+  </div>
+
+  <div class="section-lbl">Reflection Prompts</div>
+  <div class="reflect-prompts">
+    <button class="prompt-card" onclick="startSession('What patterns have I noticed in my behaviour this week? Where am I holding myself back?')">
+      <div class="pc-text">What patterns have I noticed in my behaviour this week? Where am I holding myself back?</div>
+      <div class="pc-cta">Reflect with Personality Mentor →</div>
+    </button>
+    <button class="prompt-card" onclick="startSession('Help me identify one habit I want to build and design a system around it.')">
+      <div class="pc-text">Help me identify one habit I want to build and design a system around it.</div>
+      <div class="pc-cta">Reflect with Personality Mentor →</div>
+    </button>
+    <button class="prompt-card" onclick="startSession('I had a difficult interaction today. Help me process it and extract a lesson.')">
+      <div class="pc-text">I had a difficult interaction today. Help me process it and extract a lesson.</div>
+      <div class="pc-cta">Reflect with Personality Mentor →</div>
+    </button>
+    <button class="prompt-card" onclick="startSession('What does the best version of me look like in 12 months? What needs to change now?')">
+      <div class="pc-text">What does the best version of me look like in 12 months? What needs to change now?</div>
+      <div class="pc-cta">Reflect with Personality Mentor →</div>
+    </button>
+  </div>
+</div>
+
+<script>
+function startSession(prompt) {
+  window.location.href = 'nova-lite.html?q=' + encodeURIComponent('Personality Development Mentor mode: ' + prompt);
+}
+</script>
+</body>
+</html>

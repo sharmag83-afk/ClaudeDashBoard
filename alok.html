@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>ALOK — Assistant</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="sidebar.js" defer></script>
+<style>
+:root {
+  --text-primary:#FAFAFA;--text-secondary:#B8B6B0;--text-tertiary:#76746E;
+  --accent:#6BE3A4;--blue:#7DD3FC;--purple:#A78BFA;--warn:#fbbf24;
+  --font:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;
+  --card-bg:rgba(255,255,255,0.035);--card-border:rgba(255,255,255,0.07);--radius:14px;
+}
+*{box-sizing:border-box;} html,body{margin:0;padding:0;background:#050506;color:var(--text-secondary);font-family:var(--font);-webkit-font-smoothing:antialiased;}
+body{min-height:100vh;padding:max(22px,env(safe-area-inset-top)) 20px 40px;overflow-x:hidden;}
+.page{max-width:760px;margin:0 auto;}
+.page-title{font-size:24px;font-weight:700;letter-spacing:-0.02em;background:linear-gradient(180deg,#fff 0%,#C7C4BC 120%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;margin:0 0 4px;}
+.page-sub{font-size:13px;color:var(--text-tertiary);margin-bottom:24px;}
+
+/* Action grid */
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+@media(max-width:480px){.action-grid{grid-template-columns:1fr;}}
+.action-card{
+  background:var(--card-bg);border:1px solid var(--card-border);
+  border-radius:var(--radius);padding:20px;cursor:pointer;
+  display:flex;flex-direction:column;gap:10px;text-align:left;font-family:var(--font);
+  transition:border-color .15s,background .15s;-webkit-tap-highlight-color:transparent;
+}
+.action-card:hover{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.14);}
+.action-icon{font-size:28px;line-height:1;}
+.action-title{font-size:14px;font-weight:700;color:var(--text-primary);}
+.action-desc{font-size:12px;color:var(--text-tertiary);line-height:1.5;}
+
+/* Briefing */
+.section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-tertiary);margin:0 0 10px;}
+.brief-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px 18px;margin-bottom:24px;}
+.brief-row{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;color:var(--text-secondary);line-height:1.5;}
+.brief-row:last-child{border-bottom:none;}
+.brief-arr{color:var(--accent);font-weight:700;margin-top:1px;flex-shrink:0;}
+
+/* Email status */
+.status-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px 18px;margin-bottom:24px;}
+.status-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.status-title-txt{font-size:14px;font-weight:700;color:var(--text-primary);}
+.status-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.chip{font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;}
+.chip.ok{background:rgba(107,227,164,0.12);color:var(--accent);}
+.chip.pend{background:rgba(251,191,36,0.12);color:var(--warn);}
+.status-desc{font-size:12px;color:var(--text-tertiary);line-height:1.7;}
+
+/* Telegram callout */
+.tg-card{
+  display:flex;align-items:center;gap:14px;
+  background:linear-gradient(135deg,rgba(107,227,164,0.1),rgba(125,211,252,0.06));
+  border:1px solid rgba(107,227,164,0.2);border-radius:var(--radius);
+  padding:16px 18px;margin-bottom:24px;text-decoration:none;
+  transition:border-color .15s,background .15s;
+}
+.tg-card:hover{border-color:rgba(107,227,164,0.4);background:linear-gradient(135deg,rgba(107,227,164,0.16),rgba(125,211,252,0.10));}
+.tg-icon{font-size:32px;flex-shrink:0;}
+.tg-txt{flex:1;}
+.tg-title{font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:2px;}
+.tg-sub{font-size:12px;color:var(--text-tertiary);}
+.tg-arrow{font-size:20px;color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1 class="page-title">📱 ALOK</h1>
+  <p class="page-sub">Your Telegram assistant · research · draft · notes · briefings</p>
+
+  <a href="https://t.me/your_alok_bot" target="_blank" class="tg-card">
+    <span class="tg-icon">📱</span>
+    <div class="tg-txt">
+      <div class="tg-title">Open ALOK on Telegram</div>
+      <div class="tg-sub">Send notes, get briefings, trigger research and drafts</div>
+    </div>
+    <span class="tg-arrow">→</span>
+  </a>
+
+  <div class="section-title">Quick Actions</div>
+  <div class="action-grid">
+    <button class="action-card" onclick="goTo('nova-lite.html?mode=research')">
+      <span class="action-icon">🔍</span>
+      <div class="action-title">Research</div>
+      <div class="action-desc">Perplexity-powered search with synthesised results</div>
+    </button>
+    <button class="action-card" onclick="goTo('nova-lite.html?mode=draft')">
+      <span class="action-icon">✍️</span>
+      <div class="action-title">Draft</div>
+      <div class="action-desc">Messages, emails & docs written in your voice</div>
+    </button>
+    <button class="action-card" onclick="goTo('daily-planner.html')">
+      <span class="action-icon">📝</span>
+      <div class="action-title">Notes & Ideas</div>
+      <div class="action-desc">Capture a thought → classified into tasks or ideas</div>
+    </button>
+    <button class="action-card" onclick="goTo('daily-planner.html')">
+      <span class="action-icon">✅</span>
+      <div class="action-title">Tasks</div>
+      <div class="action-desc">To-dos · charities · dates · reminders</div>
+    </button>
+  </div>
+
+  <div class="section-title">Morning Briefing</div>
+  <div class="brief-card">
+    <div class="brief-row"><span class="brief-arr">→</span><span id="brief-today">Loading…</span></div>
+    <div class="brief-row"><span class="brief-arr">→</span><span>Email sorter: no urgent items flagged</span></div>
+    <div class="brief-row"><span class="brief-arr">→</span><span>Open tasks: <a href="daily-planner.html" style="color:var(--accent);text-decoration:none">see Daily Planner →</a></span></div>
+  </div>
+
+  <div class="section-title">Email Sorter Agent</div>
+  <div class="status-card">
+    <div class="status-head">
+      <span class="status-title-txt">🗂 Inbox Automation</span>
+    </div>
+    <div class="status-chips">
+      <span class="chip ok">✓ Gmail connected</span>
+      <span class="chip pend">⏳ Yahoo — pending</span>
+      <span class="chip pend">⏳ Filter rules — pending</span>
+      <span class="chip pend">⏳ Auto-unsubscribe — pending</span>
+    </div>
+    <div class="status-desc">
+      Once configured: auto-deletes marketing emails · unsubscribes from lists ·
+      pulls important subjects into your Daily Planner task list.
+      You never need to open email manually again.
+    </div>
+  </div>
+</div>
+
+<script>
+function goTo(url) { window.location.href = url; }
+
+// Load today's todo count from localStorage
+(function() {
+  const KEY = 'planner:todos:v1';
+  let todos = [];
+  try { todos = JSON.parse(localStorage.getItem(KEY)) || []; } catch(e) {}
+  const open = todos.filter(t => !t.done).length;
+  const hi   = todos.filter(t => !t.done && t.pri === 'high').length;
+  const now  = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dateStr = days[now.getDay()]+', '+now.getDate()+' '+mons[now.getMonth()];
+  const openStr = open > 0
+    ? `${open} open task${open>1?'s':''} today${hi>0?' ('+hi+' high priority)':''}`
+    : 'No open tasks — all clear';
+  document.getElementById('brief-today').textContent = dateStr + ' · ' + openStr;
+})();
+</script>
+</body>
+</html>

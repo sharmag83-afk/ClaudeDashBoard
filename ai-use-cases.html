@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>AI Use Cases</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="sidebar.js" defer></script>
+<style>
+:root {
+  --text-primary:#FAFAFA; --text-secondary:#B8B6B0; --text-tertiary:#76746E;
+  --accent:#6BE3A4; --purple:#A78BFA; --blue:#7DD3FC;
+  --font:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;
+  --card-bg:rgba(255,255,255,0.035); --card-border:rgba(255,255,255,0.07); --radius:14px;
+}
+*{box-sizing:border-box;} html,body{margin:0;padding:0;background:#050506;color:var(--text-secondary);font-family:var(--font);-webkit-font-smoothing:antialiased;}
+body{min-height:100vh;padding:max(22px,env(safe-area-inset-top)) 20px 40px;overflow-x:hidden;}
+.page{max-width:760px;margin:0 auto;}
+.page-title{font-size:24px;font-weight:700;letter-spacing:-0.02em;background:linear-gradient(180deg,#fff 0%,#C7C4BC 120%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;margin:0 0 6px;}
+.page-sub{font-size:13px;color:var(--text-tertiary);margin-bottom:24px;}
+
+.uc-list{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.uc-item{
+  background:var(--card-bg);border:1px solid var(--card-border);
+  border-radius:var(--radius);padding:16px 18px;
+  display:flex;align-items:flex-start;gap:14px;
+  transition:border-color .15s,background .15s;
+}
+.uc-item:hover{border-color:rgba(167,139,250,0.3);background:rgba(167,139,250,0.04);}
+.uc-num{font-size:11px;font-weight:700;color:var(--text-tertiary);min-width:24px;padding-top:2px;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;}
+.uc-body{flex:1;}
+.uc-title{font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;}
+.uc-desc{font-size:12.5px;color:var(--text-secondary);line-height:1.6;}
+.uc-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.uc-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:rgba(167,139,250,0.12);color:var(--purple);}
+.discuss-btn{
+  background:none;border:1px solid rgba(167,139,250,0.3);color:var(--purple);
+  border-radius:10px;padding:7px 14px;font-family:var(--font);font-size:12px;font-weight:600;
+  cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0;margin-top:2px;
+}
+.discuss-btn:hover{background:rgba(167,139,250,0.15);border-color:var(--purple);}
+
+.add-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);
+  padding:12px 18px;color:var(--text-secondary);font-family:var(--font);font-size:13px;font-weight:600;
+  cursor:pointer;transition:background .15s,border-color .15s,color .15s;width:100%;justify-content:center;
+}
+.add-btn:hover{background:rgba(255,255,255,0.06);color:var(--text-primary);border-color:rgba(255,255,255,0.15);}
+
+/* Add form */
+.add-form{display:none;margin-bottom:12px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px 18px;}
+.add-form.open{display:block;}
+.form-field{margin-bottom:12px;}
+.form-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-tertiary);margin-bottom:6px;display:block;}
+.form-inp{width:100%;padding:10px 13px;border:1px solid rgba(255,255,255,0.1);border-radius:10px;background:rgba(0,0,0,0.3);color:var(--text-primary);font-family:var(--font);font-size:13px;outline:none;transition:border-color .2s;}
+.form-inp:focus{border-color:var(--purple);}
+.form-actions{display:flex;gap:8px;}
+.form-save{background:var(--purple);color:#050506;border:none;border-radius:10px;padding:9px 18px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;}
+.form-cancel{background:none;border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);border-radius:10px;padding:9px 18px;font-family:var(--font);font-size:13px;cursor:pointer;}
+.form-cancel:hover{color:var(--text-primary);}
+
+.nova-hint{
+  margin-bottom:20px;padding:14px 16px;
+  background:rgba(167,139,250,0.07);border:1px solid rgba(167,139,250,0.18);
+  border-radius:var(--radius);font-size:13px;color:var(--text-secondary);line-height:1.6;
+}
+.nova-hint strong{color:var(--purple);}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1 class="page-title">🤖 AI Use Cases</h1>
+  <p class="page-sub">Explore, capture, and discuss AI use cases with Nova</p>
+
+  <div class="nova-hint">
+    ✨ Tap <strong>Discuss →</strong> on any use case to launch a deep-dive session with <strong>Nova, your AI Mentor</strong>.
+    Use this page to build your personal AI playbook.
+  </div>
+
+  <div id="add-form-wrap">
+    <div class="add-form" id="add-form">
+      <div class="form-field">
+        <label class="form-lbl">Use case title</label>
+        <input class="form-inp" id="uc-title" placeholder="e.g. AI-powered email triage">
+      </div>
+      <div class="form-field">
+        <label class="form-lbl">Description</label>
+        <input class="form-inp" id="uc-desc" placeholder="Brief description of the use case…">
+      </div>
+      <div class="form-field">
+        <label class="form-lbl">Tags (comma separated)</label>
+        <input class="form-inp" id="uc-tags" placeholder="e.g. automation, email, productivity">
+      </div>
+      <div class="form-actions">
+        <button class="form-save" onclick="saveUC()">Save Use Case</button>
+        <button class="form-cancel" onclick="toggleForm()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="uc-list" id="uc-list"></div>
+  <button class="add-btn" onclick="toggleForm()">+ Add Use Case</button>
+</div>
+
+<script>
+(function() {
+  const KEY = 'usecases:v1';
+  function load() { try { return JSON.parse(localStorage.getItem(KEY))||[]; } catch(e){ return []; } }
+  function save(d) { localStorage.setItem(KEY,JSON.stringify(d)); }
+
+  let useCases = load();
+  if (!useCases.length) {
+    useCases = [
+      { id:1, title:'AI Email Sorter Agent', desc:'Auto-classify inbox, delete marketing, surface important items to Daily Planner tasks', tags:['automation','email','ALOK'] },
+      { id:2, title:'ALOK Morning Briefing', desc:'Daily 7am summary of calendar events, tasks, health score, and top priorities via Telegram', tags:['ALOK','daily planning','briefing'] },
+      { id:3, title:'WHOOP + Fitness Mentor', desc:'Recovery-aware workout programming that adapts daily based on HRV and sleep score', tags:['fitness','WHOOP','health'] },
+      { id:4, title:'Perplexity Research Synthesis', desc:'Multi-source web research → structured report via the Research button in ALOK', tags:['research','ALOK','Perplexity'] },
+      { id:5, title:'Voice-matched Drafting', desc:'Generate any email, message, or document in Gaurav\'s exact tone and style', tags:['email','drafting','ALOK'] },
+      { id:6, title:'Progressive Overload AI Coach', desc:'Nova analyses gym logs and suggests optimal weight/rep progressions for each exercise', tags:['fitness','Nova','coaching'] },
+    ];
+    save(useCases);
+  }
+  let uid = Math.max(0,...useCases.map(u=>u.id||0))+1;
+
+  function render() {
+    document.getElementById('uc-list').innerHTML = useCases.map((u,i)=>`
+      <div class="uc-item">
+        <div class="uc-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="uc-body">
+          <div class="uc-title">${u.title}</div>
+          <div class="uc-desc">${u.desc}</div>
+          ${u.tags&&u.tags.length?`<div class="uc-tags">${u.tags.map(t=>`<span class="uc-tag">${t}</span>`).join('')}</div>`:''}
+        </div>
+        <button class="discuss-btn" onclick="discuss(${u.id})">Discuss →</button>
+      </div>`).join('');
+  }
+
+  window.discuss = function(id) {
+    const u = useCases.find(x=>x.id===id);
+    if (!u) return;
+    window.location.href = 'nova-lite.html?uc='+encodeURIComponent(u.title);
+  };
+
+  window.toggleForm = function() {
+    const f = document.getElementById('add-form');
+    f.classList.toggle('open');
+    if (f.classList.contains('open')) document.getElementById('uc-title').focus();
+  };
+
+  window.saveUC = function() {
+    const t = document.getElementById('uc-title').value.trim();
+    const d = document.getElementById('uc-desc').value.trim();
+    const tags = document.getElementById('uc-tags').value.split(',').map(s=>s.trim()).filter(Boolean);
+    if (!t) return;
+    useCases.push({ id:uid++, title:t, desc:d||'', tags });
+    save(useCases);
+    ['uc-title','uc-desc','uc-tags'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('add-form').classList.remove('open');
+    render();
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>

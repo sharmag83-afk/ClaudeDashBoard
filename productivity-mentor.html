@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Productivity Mentor</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="sidebar.js" defer></script>
+<style>
+:root {
+  --text-primary:#FAFAFA;--text-secondary:#B8B6B0;--text-tertiary:#76746E;
+  --accent:#6BE3A4;--blue:#7DD3FC;
+  --font:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;
+  --card-bg:rgba(255,255,255,0.035);--card-border:rgba(255,255,255,0.07);--radius:14px;
+}
+*{box-sizing:border-box;} html,body{margin:0;padding:0;background:#050506;color:var(--text-secondary);font-family:var(--font);-webkit-font-smoothing:antialiased;}
+body{min-height:100vh;padding:max(22px,env(safe-area-inset-top)) 20px 40px;overflow-x:hidden;}
+.page{max-width:640px;margin:0 auto;}
+.hero{text-align:center;padding:40px 0 32px;}
+.hero-icon{font-size:56px;margin-bottom:16px;}
+.hero-title{font-size:28px;font-weight:700;letter-spacing:-0.025em;background:linear-gradient(180deg,#fff 0%,#C7C4BC 120%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;margin:0 0 10px;}
+.hero-desc{font-size:14px;color:var(--text-secondary);line-height:1.7;max-width:440px;margin:0 auto 24px;}
+.tags{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:32px;}
+.tag{font-size:11px;font-weight:600;padding:4px 12px;border-radius:12px;background:rgba(107,227,164,0.1);color:var(--accent);border:1px solid rgba(107,227,164,0.2);}
+.start-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,rgba(107,227,164,0.25),rgba(125,211,252,0.15));
+  border:1px solid rgba(107,227,164,0.35);
+  border-radius:14px;padding:14px 28px;
+  color:var(--text-primary);font-family:var(--font);font-size:15px;font-weight:700;
+  cursor:pointer;text-decoration:none;transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.start-btn:hover{background:linear-gradient(135deg,rgba(107,227,164,0.38),rgba(125,211,252,0.25));border-color:rgba(107,227,164,0.55);}
+.section-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-tertiary);margin:0 0 12px;}
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px;}
+@media(max-width:480px){.quick-grid{grid-template-columns:1fr;}}
+.quick-card{
+  background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:14px 16px;
+  cursor:pointer;text-decoration:none;display:block;transition:border-color .15s,background .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.quick-card:hover{border-color:rgba(107,227,164,0.3);background:rgba(107,227,164,0.04);}
+.qc-title{font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:3px;}
+.qc-sub{font-size:11.5px;color:var(--text-tertiary);}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hero">
+    <div class="hero-icon">⚡</div>
+    <h1 class="hero-title">Productivity Mentor</h1>
+    <p class="hero-desc">Your execution engine. Manages tasks, daily planning, email drafting, briefings, and keeps you relentlessly on track. Routes everything from ALOK into your workflow.</p>
+    <div class="tags">
+      <span class="tag">Daily Planning</span>
+      <span class="tag">Task Management</span>
+      <span class="tag">Email Drafting</span>
+      <span class="tag">Morning Briefings</span>
+      <span class="tag">ALOK Integration</span>
+      <span class="tag">Evening Summary</span>
+    </div>
+    <a href="nova-lite.html?mode=productivity" class="start-btn">▶ Start Productivity Session</a>
+  </div>
+
+  <div class="section-lbl">Quick Access</div>
+  <div class="quick-grid">
+    <a href="daily-planner.html" class="quick-card">
+      <div class="qc-title">📅 Daily Planner</div>
+      <div class="qc-sub">Calendar, tasks, this week</div>
+    </a>
+    <a href="main.html" class="quick-card">
+      <div class="qc-title">🏠 Goals & Streaks</div>
+      <div class="qc-sub">Daily goals, to-do list</div>
+    </a>
+    <a href="alok.html" class="quick-card">
+      <div class="qc-title">📱 ALOK</div>
+      <div class="qc-sub">Draft, research, tasks</div>
+    </a>
+    <a href="nova-lite.html" class="quick-card">
+      <div class="qc-title">✨ Nova</div>
+      <div class="qc-sub">Strategy and decisions</div>
+    </a>
+  </div>
+</div>
+</body>
+</html>
